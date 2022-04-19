@@ -8,6 +8,8 @@ public class ContinuousMovement : MonoBehaviour
 {
     public float speed = 1.5f;
     public float runSpeed = 3f;
+    
+
     public XRNode inputSource1;
     public XRNode inputSource2;
     public float gravity = -9.81f;
@@ -40,25 +42,39 @@ public class ContinuousMovement : MonoBehaviour
     private void FixedUpdate()
     {
         CapsuleFollowHeadset();
-        
+
+        bool inWater = CheckInWater();
+        float waterSpeedModifier;
+        if (inWater)
+            waterSpeedModifier = 0.75f;
+        else
+            waterSpeedModifier = 1f;
+
         //basic movement
         Quaternion headYaw = Quaternion.Euler(0, rig.Camera.transform.eulerAngles.y, 0);
         Vector3 direction = headYaw * new Vector3(inputAxis.x, 0, inputAxis.y);
         if(!sprinting)
-            character.Move(direction * Time.fixedDeltaTime * speed);
+            character.Move(direction * Time.fixedDeltaTime * speed * waterSpeedModifier);
         else
-            character.Move(direction * Time.fixedDeltaTime * runSpeed);
+            character.Move(direction * Time.fixedDeltaTime * runSpeed * waterSpeedModifier);
 
         //gravity
         bool isGrounded = CheckIfGrounded();
-        if (isGrounded) {
+        
+        if (isGrounded && !inWater) {
             if (!jumping)
                 fallingSpeed = 0;
             else
                 fallingSpeed = 5;
         }
         else
-            fallingSpeed += gravity * Time.fixedDeltaTime;
+        {
+            if (!inWater)
+                fallingSpeed += gravity * Time.fixedDeltaTime;
+            else
+                fallingSpeed = 0;
+        }
+            
         character.Move(Vector3.up * fallingSpeed * Time.fixedDeltaTime);
     }
 
@@ -77,7 +93,18 @@ public class ContinuousMovement : MonoBehaviour
         //determines this using a downwards spherecast
         Vector3 rayStart = transform.TransformPoint(character.center);
         float rayLength = character.center.y + 0.01f;
-        bool hasHit = Physics.SphereCast(rayStart, character.radius, Vector3.down, out RaycastHit hitInfo, rayLength);
+        //Layer 0 is ground layer
+        bool hasHit = Physics.SphereCast(rayStart, character.radius, Vector3.down, out RaycastHit hitInfo, rayLength, 0);
+        return hasHit;
+    }
+
+    bool CheckInWater()
+    {
+        //used to determine whether to apply water physics
+        Vector3 rayStart = transform.TransformPoint(character.center);
+        float rayLength = character.center.y - 0.05f;
+        //Layer 4 is water layer
+        bool hasHit = Physics.SphereCast(rayStart, character.radius, Vector3.down, out RaycastHit hitInfo, rayLength, 4);
         return hasHit;
     }
 }
