@@ -18,6 +18,6 @@ public class TimeChange : MonoBehaviour
 
     private void FixedUpdate()
     {
-        this.gameObject.transform.Rotate(0, 0, 0.1f);
+        this.gameObject.transform.Rotate(0, 0, 0.01f);
     }
 }
