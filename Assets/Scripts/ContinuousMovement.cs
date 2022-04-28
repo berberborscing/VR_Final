@@ -8,7 +8,6 @@ public class ContinuousMovement : MonoBehaviour
 {
     public float speed = 1.5f;
     public float runSpeed = 3f;
-    
 
     public XRNode inputSource1;
     public XRNode inputSource2;
@@ -19,7 +18,10 @@ public class ContinuousMovement : MonoBehaviour
     private Vector2 inputAxis;
     private bool jumping;
     private bool sprinting;
+    private bool toggleInterface;
     private CharacterController character;
+
+    public GameObject interfaceCanvas;
     
     // Start is called before the first frame update
     void Start()
@@ -36,6 +38,7 @@ public class ContinuousMovement : MonoBehaviour
         device1.TryGetFeatureValue(CommonUsages.primary2DAxis, out inputAxis);
         device2.TryGetFeatureValue(CommonUsages.primaryButton, out jumping);
         device1.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out sprinting);
+        device1.TryGetFeatureValue(CommonUsages.secondaryButton, out toggleInterface);
     }
 
     //Called whenever Unity updates the physics of the game
@@ -46,9 +49,9 @@ public class ContinuousMovement : MonoBehaviour
         bool inWater = CheckInWater();
         float waterSpeedModifier;
         if (inWater)
-            waterSpeedModifier = 0.75f;
-        else
             waterSpeedModifier = 1f;
+        else
+            waterSpeedModifier = 1.5f;
 
         //basic movement
         Quaternion headYaw = Quaternion.Euler(0, rig.Camera.transform.eulerAngles.y, 0);
@@ -61,7 +64,7 @@ public class ContinuousMovement : MonoBehaviour
         //gravity
         bool isGrounded = CheckIfGrounded();
         
-        if (isGrounded && !inWater) {
+        if (isGrounded /*&& !inWater*/) {
             if (!jumping)
                 fallingSpeed = 0;
             else
@@ -69,12 +72,15 @@ public class ContinuousMovement : MonoBehaviour
         }
         else
         {
-            if (!inWater)
+            //if (!inWater)
                 fallingSpeed += gravity * Time.fixedDeltaTime;
-            else
-                fallingSpeed = 0;
+            //else
+                //fallingSpeed = 0;
         }
-            
+        if (toggleInterface && !interfaceCanvas.activeInHierarchy)
+        {
+            interfaceCanvas.SetActive(true);
+        }
         character.Move(Vector3.up * fallingSpeed * Time.fixedDeltaTime);
     }
 
@@ -94,7 +100,7 @@ public class ContinuousMovement : MonoBehaviour
         Vector3 rayStart = transform.TransformPoint(character.center);
         float rayLength = character.center.y + 0.01f;
         //Layer 0 is ground layer
-        bool hasHit = Physics.SphereCast(rayStart, character.radius, Vector3.down, out RaycastHit hitInfo, rayLength, 0);
+        bool hasHit = Physics.SphereCast(rayStart, character.radius, Vector3.down, out RaycastHit hitInfo, rayLength);
         return hasHit;
     }
 

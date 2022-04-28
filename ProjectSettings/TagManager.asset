@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - Water
+  - Music
+  - SFX
   layers:
   - Default
   - TransparentFX
